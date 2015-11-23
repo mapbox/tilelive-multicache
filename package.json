@@ -13,7 +13,7 @@
     "lru-cache": "2.7.x"
   },
   "scripts": {
-    "test": "mocha -R spec"
+    "test": "tap test/*.test.js"
   },
   "engines": {
     "node": "0.10.x"
