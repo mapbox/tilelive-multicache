@@ -1,24 +1,21 @@
 {
   "name": "tilelive-redis",
-  "version": "0.9.1",
+  "version": "0.0.1",
   "main": "./index.js",
-  "description": "redis wrapping source for tilelive",
+  "description": "Cache wrapping source for tilelive",
   "repository": {
     "type": "git",
-    "url": "git://github.com/mapbox/tilelive-redis.git"
-  },
-  "dependencies": {
-    "buffer-equal": "0.0.1",
-    "redis": "0.12.1"
+    "url": "git://github.com/mapbox/tilelive-cache.git"
   },
   "devDependencies": {
     "buffer-equal": "0.0.x",
-    "mocha": "1.3.x"
+    "tap": "2.3.x",
+    "lru-cache": "2.7.x"
   },
   "scripts": {
     "test": "mocha -R spec"
   },
   "engines": {
-    "node": "0.8.x || 0.10.x"
+    "node": "0.10.x"
   }
 }

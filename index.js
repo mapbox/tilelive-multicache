@@ -1,21 +1,19 @@
 var urlParse = require('url').parse;
 var util = require('util');
-var redis = require('redis');
-var bufferEqual = require('buffer-equal');
 
 module.exports = function(options, Source) {
     if (!Source) throw new Error('No source provided');
     if (!Source.prototype.get) throw new Error('No get method found on source');
 
-    function Caching() { return Source.apply(this, arguments) };
+    function Caching() { return Source.apply(this, arguments); }
 
     // Inheritance.
     util.inherits(Caching, Source);
 
     // References for testing, convenience, post-call overriding.
-    Caching.redis = options;
+    Caching.options = options;
 
-    Caching.prototype.get = module.exports.cachingGet('TL3', options, Source.prototype.get);
+    Caching.prototype.get = module.exports.cachingGet('TL4', options, Source.prototype.get);
 
     return Caching;
 };
@@ -25,36 +23,26 @@ module.exports.cachingGet = function(namespace, options, get) {
     if (!namespace) throw new Error('No namespace provided');
 
     options = options || {};
-    if (options.client) {
-        options.client.options.return_buffers = true;
-    } else {
-        options.client = redis.createClient({return_buffers: true});
-    }
     options.stale = typeof options.stale === 'number' ? options.stale : 300;
     options.ttl = typeof options.ttl === 'number' ? options.ttl : 300;
 
-    if (!options.client) throw new Error('No redis client');
+    if (!options.client) throw new Error('No cache client');
     if (!options.stale) throw new Error('No stale option set');
     if (!options.ttl) throw new Error('No ttl option set');
 
-    return function relay(url, callback) {
+    return function(url, callback) {
         var key = namespace + '-' + url;
         var source = this;
         var client = options.client;
         var stale = options.stale;
         var ttl = options.ttl;
 
-        if (client.command_queue.length >= client.command_queue_high_water) {
-            client.emit('error', new Error('Redis command queue at high water mark'));
-            return get.call(source, url, callback);
-        }
-
         client.get(key, function(err, encoded) {
-            // If error on redis get, pass through to original source
+            // If error on get, pass through to original source
             // without attempting a set after retrieval.
             if (err) {
                 err.key = key;
-                client.emit('error', err);
+                client.error(err);
                 return get.call(source,url, callback);
             }
 
@@ -62,9 +50,9 @@ module.exports.cachingGet = function(namespace, options, get) {
             var data;
             if (encoded) try {
                 data = decode(encoded);
-            } catch(err) {
-                err.key = key;
-                client.emit('error', err);
+            } catch(e) {
+                e.key = key;
+                client.error(e);
             }
             if (data) {
                 callback(data.err, data.buffer, data.headers);
@@ -95,13 +83,13 @@ module.exports.cachingGet = function(namespace, options, get) {
             delete headers.expires;
             if (expires) {
                 headers.expires = expires;
-                headers['x-redis-expires'] = expires;
+                headers['x-tl-expires'] = expires;
             } else {
-                headers['x-redis-expires'] = (new Date(Date.now() + (ttl * 1000))).toUTCString();
+                headers['x-tl-expires'] = (new Date(Date.now() + (ttl * 1000))).toUTCString();
             }
 
             // seconds from now to expiration time
-            var sec = Math.ceil((Number(new Date(headers['x-redis-expires'])) - Number(new Date()))/1000);
+            var sec = Math.ceil((Number(new Date(headers['x-tl-expires'])) - Number(new Date()))/1000);
 
             // stale is the number of extra seconds to cache an object
             // past its expires time where we may serve a "stale"
@@ -111,10 +99,10 @@ module.exports.cachingGet = function(namespace, options, get) {
             // so that the upstream expires is fully respected.
             var pad = expires ? 0 : stale;
 
-            if (sec > 0) client.setex(key, sec + pad, encode(err, buffer, headers), function(err) {
+            if (sec > 0) client.set(key, sec + pad, encode(err, buffer, headers), function(err) {
                 if (!err) return;
                 err.key = key;
-                client.emit('error', err);
+                client.error(err);
             });
 
             return headers;
@@ -122,16 +110,13 @@ module.exports.cachingGet = function(namespace, options, get) {
 
         function isFresh(d) {
             // When we don't have an expires header just assume staleness
-            if (d.headers === undefined || !d.headers['x-redis-expires']) return false;
+            if (d.headers === undefined || !d.headers['x-tl-expires']) return false;
 
-            return (+(new Date(d.headers['x-redis-expires'])) > Date.now());
+            return (+(new Date(d.headers['x-tl-expires'])) > Date.now());
         }
-    }
-
-    return caching;
+    };
 };
 
-module.exports.redis = redis;
 module.exports.encode = encode;
 module.exports.decode = decode;
 
@@ -152,7 +137,7 @@ function encode(err, buffer, headers) {
 
     // Turn objects into JSON string buffers.
     if (buffer && typeof buffer === 'object' && !(buffer instanceof Buffer)) {
-        headers['x-redis-json'] = true;
+        headers['x-tl-json'] = true;
         buffer = new Buffer(JSON.stringify(buffer));
     // Turn strings into buffers.
     } else if (buffer && !(buffer instanceof Buffer)) {
@@ -169,7 +154,7 @@ function encode(err, buffer, headers) {
     padding.fill(' ');
     var len = headers.length + padding.length + buffer.length;
     return Buffer.concat([headers, padding, buffer], len);
-};
+}
 
 function decode(encoded) {
     if (encoded.length == 3) {
@@ -177,7 +162,7 @@ function decode(encoded) {
         if (encoded === '404' || encoded === '403') {
             var err = new Error();
             err.statusCode = parseInt(encoded, 10);
-            err.redis = true;
+            err.tlcache= true;
             return { err: err };
         }
     }
@@ -193,13 +178,13 @@ function decode(encoded) {
         throw new Error('Invalid cache value');
     }
 
-    data.headers['x-redis'] = 'hit';
+    data.headers['x-tl-cache'] = 'hit';
     data.buffer = encoded.slice(offset);
 
     // Return JSON-encoded objects to true form.
-    if (data.headers['x-redis-json']) data.buffer = JSON.parse(data.buffer);
+    if (data.headers['x-tl-json']) data.buffer = JSON.parse(data.buffer);
 
     if (data.headers['content-length'] && data.headers['content-length'] != data.buffer.length)
         throw new Error('Content length does not match');
     return data;
-};
+}

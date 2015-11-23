@@ -15,7 +15,7 @@ var perf = {
     a: require('fs').readFileSync(__dirname + '/encode-buster.pbf'),
 };
 
-Testsource.now = new Date;
+Testsource.now = new Date();
 Testsource.tiles = tiles;
 Testsource.grids = grids;
 Testsource.perf = perf;
@@ -29,7 +29,7 @@ function Testsource(uri, callback) {
         'get': 0
     };
     callback(null, this);
-};
+}
 Testsource.prototype.get = function(url, callback) {
     if (this._uri === undefined) throw new Error('Called without proper context');
 
@@ -118,7 +118,7 @@ Testsource.prototype.get = function(url, callback) {
                 'last-modified': now.toUTCString()
             });
         default:
-            var err = new Error;
+            var err = new Error();
             err.statusCode = 404;
             return callback(err);
         }

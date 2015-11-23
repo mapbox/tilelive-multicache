@@ -1,13 +1,13 @@
-[![Build Status](https://travis-ci.org/mapbox/tilelive-redis.png?branch=master)](https://travis-ci.org/mapbox/tilelive-redis)
+[![Build Status](https://travis-ci.org/mapbox/tilelive-cache.png?branch=master)](https://travis-ci.org/mapbox/tilelive-cache)
 
-tilelive-redis
+tilelive-cache
 --------------
-Module for adding a redis-based caching layer in front a [node-tilejson](https://github.com/mapbox/node-tilejson) tilelive source.
+Module for adding a caching layer in front a [node-tilejson](https://github.com/mapbox/node-tilejson) tilelive source.
 
-It wraps `node-tilejson`, providing a new source constructor with redis superpowers:
+It wraps `node-tilejson`, providing a new source constructor with cached superpowers:
 
     var options = {
-        client: client, // optional, instantiated redis client
+        client: client, // Required, instantiated client
         ttl: 300,       // optional, object cache ttl in seconds
         stale: 300      // optional, max number of seconds to allow a stale object to be served
     };
@@ -15,15 +15,9 @@ It wraps `node-tilejson`, providing a new source constructor with redis superpow
 
     new TileJSON( ... )
 
-### Requirements
 
-Required minimal/supported version of redis-server is 2.8.x
+The `client` option must be and object with the following methods;
 
-### Command queue high water mark
-
-`node-redis` supports a `command_queue_high_water` option, which tilelive-redis
-uses in order to avoid back pressure in the application as a result of a failing
-redis server.  tilelive-redis will skip redis and instead request only from the
-source once the command queue high water mark is hit.  The default value for
-`command_queue_high_water` is set by node-redis and is 1000; set a custom value
-in your redis client if you desire.
+- `set(key, ttl, value, callback)`
+- `get(key, callback)`
+- `error(err)`
