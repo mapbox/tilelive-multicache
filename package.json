@@ -1,11 +1,11 @@
 {
-  "name": "tilelive-cache",
+  "name": "tilelive-multicache",
   "version": "0.0.1",
   "main": "./index.js",
   "description": "Cache wrapping source for tilelive",
   "repository": {
     "type": "git",
-    "url": "git://github.com/mapbox/tilelive-cache.git"
+    "url": "git://github.com/mapbox/tilelive-multicache.git"
   },
   "devDependencies": {
     "buffer-equal": "0.0.x",
