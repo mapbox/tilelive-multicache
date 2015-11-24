@@ -197,3 +197,42 @@ test('Dead Redis client', function(t) {
 
     t.end();
 });
+
+test('Redis high water mark', function(t) {
+
+    var cacheClient = client();
+    var hwmHit;
+    cacheClient.error = function(err) {
+        hwmHit = true;
+        assert.equal(err.message, 'Redis command queue at high water mark');
+    };
+
+    var CachedSource = TileliveCache({
+        client: cacheClient,
+        ttl: 1,
+        stale: 1
+    }, Testsource);
+    var source;
+    t.test('create source', function(t) {
+        source = new CachedSource({ delay: 50 }, function(err) {
+            assert.ifError(err);
+            CachedSource.options.client.redis.command_queue_high_water = 0;
+            CachedSource.options.client.redis.flushdb(function() {
+                t.end();
+            });
+        });
+    });
+    t.test('error on high water mark', function(t) {
+        source.getTile(0, 0, 0, function(err /*, res */) {
+            assert.ifError(err);
+            assert.equal(hwmHit, true);
+            t.end();
+        });
+    });
+
+    t.test('quit', function(t) {
+        CachedSource.options.client.redis.end();
+        t.end();
+    });
+    t.end();
+});
