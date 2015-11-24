@@ -1,6 +1,5 @@
 var assert = require('assert');
 var tap = require('tap');
-var LRU = require('lru-cache');
 var TileliveCache = require('../index');
 var bufferEqual = require('buffer-equal');
 
@@ -68,7 +67,7 @@ test('decode', function(t) {
     );
     assert.deepEqual(TileliveCache.decode(encoded), {
         headers:{'x-tl-cache':'hit'},
-        buffer: new Buffer('hello world'),
+        buffer: new Buffer('hello world')
     }, 'decodes string (as buffer)');
 
     headers = JSON.stringify({'x-tl-cache':'hit'});
@@ -79,7 +78,7 @@ test('decode', function(t) {
     );
     assert.deepEqual(TileliveCache.decode(encoded), {
         headers:{'x-tl-cache':'hit'},
-        buffer: new Buffer(0),
+        buffer: new Buffer(0)
     }, 'decodes empty buffer');
 
     encoded = new Buffer('bogus');

@@ -1,4 +1,3 @@
-var urlParse = require('url').parse;
 var util = require('util');
 
 module.exports = function(options, Source) {

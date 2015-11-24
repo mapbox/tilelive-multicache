@@ -3,22 +3,21 @@ module.exports = Testsource;
 var now = new Date;
 var tiles = {
     a: require('fs').readFileSync(__dirname + '/a.png'),
-    b: require('fs').readFileSync(__dirname + '/b.png'),
+    b: require('fs').readFileSync(__dirname + '/b.png')
 };
 
 var grids = {
     a: { grid:'', keys: ['', '1' ], data:{'1': {'name':'foo'}} },
-    b: { grid:'', keys: ['', '1' ], data:{'1': {'name':'bar'}} },
+    b: { grid:'', keys: ['', '1' ], data:{'1': {'name':'bar'}} }
 };
 
 var perf = {
-    a: require('fs').readFileSync(__dirname + '/encode-buster.pbf'),
+    a: require('fs').readFileSync(__dirname + '/encode-buster.pbf')
 };
 
 Testsource.now = new Date();
 Testsource.tiles = tiles;
 Testsource.grids = grids;
-Testsource.perf = perf;
 
 // Define a mock test source.
 function Testsource(uri, callback) {

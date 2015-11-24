@@ -1,7 +1,6 @@
 var assert = require('assert');
 var tap = require('tap');
 var LRU = require('lru-cache');
-var bufferEqual = require('buffer-equal');
 var TileliveCache = require('../index');
 
 var Testsource = require('./testsource');
@@ -25,7 +24,7 @@ function lruClient() {
             cb(null);
         },
         error: function(err) {
-            console.error(err);
+            console.error(err); // eslint-disable-line no-console
         }
     };
 }
@@ -52,7 +51,7 @@ test('load', function(t) {
         var Source = TileliveCache({
             client: lruClient(),
             ttl: 10,
-            stale: 5,
+            stale: 5
         }, Testsource);
         assert.ok(Source.options);
         assert.equal(Source.options.ttl, 10);
@@ -86,7 +85,7 @@ var grid = function(expected, cached, done) {
     };
 };
 var error = function(message, cached, done) {
-    return function(err, data, headers) {
+    return function(err /*, data, headers */) {
         assert.ok(cached ? err.tlcache: !err.tlcache);
         assert.equal(err.message, message);
         done();
@@ -230,18 +229,19 @@ test('upstream expires', function(t) {
         stats[id] = stats[id] || 0;
         stats[id]++;
 
+        var err;
         if (id === 'missing') {
-            var err = new Error('Not found');
+            err = new Error('Not found');
             err.statusCode = 404;
             return callback(err);
         }
         if (id === 'fatal') {
-            var err = new Error('Fatal');
+            err = new Error('Fatal');
             err.statusCode = 500;
             return callback(err);
         }
         if (id === 'nocode') {
-            var err = new Error('Unexpected');
+            err = new Error('Unexpected');
             return callback(err);
         }
 
@@ -423,7 +423,7 @@ test('perf-source', function(t) {
     t.test('gets buster tile 10x in < 20ms', function(t) {
         var remaining = 10;
         var time = + new Date();
-        for (var i = 0; i < 10; i++) source.getTile(0,0,0, function(err, data, headers) {
+        for (var i = 0; i < 10; i++) source.getTile(0,0,0, function(err, data /*, headers */) {
             assert.ifError(err);
             assert.equal(data.length, 783167);
             if (!--remaining) {
