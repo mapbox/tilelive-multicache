@@ -81,6 +81,26 @@ test('decode', function(t) {
         buffer: new Buffer(0)
     }, 'decodes empty buffer');
 
+    headers = JSON.stringify({'content-length':'5'});
+    encoded = new Buffer(
+        headers +
+        new Array(1025 - headers.length).join(' ') +
+        '0'
+    );
+    assert.throws(function() {
+        TileliveCache.decode(encoded);
+    }, Error, 'throws on bad content-length');
+
+    headers = JSON.stringify({'content-length':'1'});
+    encoded = new Buffer(
+        headers +
+        new Array(1025 - headers.length).join(' ') +
+        '0'
+    );
+    assert.doesNotThrow(function() {
+        TileliveCache.decode(encoded);
+    }, Error, 'matches good content-length');
+
     encoded = new Buffer('bogus');
     assert.throws(function() {
         TileliveCache.decode(encoded);
