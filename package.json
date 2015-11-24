@@ -11,7 +11,9 @@
     "buffer-equal": "0.0.x",
     "tap": "2.3.x",
     "eslint": "^1.2.1",
-    "lru-cache": "2.7.x"
+    "lru-cache": "2.7.x",
+    "redis": "0.12.1",
+    "memjs": "0.8.7"
   },
   "scripts": {
     "test": "eslint ./index.js test/*.js && tap -Rspec test/*.test.js"

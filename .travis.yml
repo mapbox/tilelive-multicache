@@ -3,6 +3,7 @@ node_js:
   - "0.10"
 
 services:
+  - memcached
   - redis-server
 
 sudo: false
