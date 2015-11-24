@@ -415,7 +415,7 @@ test('perf-source', function(t) {
         var CachedSource = TileliveCache({
             client: lruClient()
         }, Testsource);
-        source = new CachedSource({}, function(err) {
+        source = new CachedSource({hostname: 'perf'}, function(err) {
             assert.ifError(err);
             t.end();
         });
