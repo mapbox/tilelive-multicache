@@ -10,8 +10,8 @@ var now = Testsource.now;
 
 var test = tap.test;
 
-function client() {
-    var cache = memjs.Client.create(null, {'keepAlive': true});
+function client(cacheClient) {
+    var cache = cacheClient || memjs.Client.create(null, {'keepAlive': true});
 
     return {
         get: function(k, cb) {
@@ -25,6 +25,9 @@ function client() {
         },
         memcached: cache
     };
+}
+function deadClient() {
+    return client(memjs.Client.create('127.0.0.1:11212'));
 }
 
 var tile = function(expected, cached, done) {
@@ -57,7 +60,7 @@ var error = function(message, cached, done) {
     };
 };
 
-test('source', function(t) {
+test('memjs client', function(t) {
     var CachedSource = TileliveCache({
         client: client(),
         ttl: 1,
@@ -138,6 +141,42 @@ test('source', function(t) {
             });
             t.end();
         }, 2000);
+    });
+
+    t.test('quit', function(t) {
+        CachedSource.options.client.memcached.quit();
+        t.end();
+    });
+
+    t.end();
+});
+
+test('Dead memjs client', function(t) {
+    var CachedSource = TileliveCache({
+        client: deadClient(),
+        ttl: 1,
+        stale: 1
+    }, Testsource);
+    var source;
+    t.test('create source', function(t) {
+        source = new CachedSource({}, function(err) {
+            assert.ifError(err);
+            CachedSource.options.client.memcached.flush(function() {
+                t.end();
+            });
+        });
+    });
+    t.test('dead tile 200 a miss', function(t) {
+        source.getTile(0, 0, 0, tile(tiles.a, false, t.end));
+    });
+    t.test('dead tile 200 b miss', function(t) {
+        source.getTile(1, 0, 0, tile(tiles.b, false, t.end));
+    });
+    t.test('dead grid 200 a miss', function(t) {
+        source.getGrid(0, 0, 0, grid(grids.a, false, t.end));
+    });
+    t.test('dead grid 200 b miss', function(t) {
+        source.getGrid(1, 0, 0, grid(grids.b, false, t.end));
     });
 
     t.test('quit', function(t) {

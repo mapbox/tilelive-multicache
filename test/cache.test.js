@@ -31,11 +31,11 @@ function lruClient() {
 
 test('load', function(t) {
 
-    //t.test('fails without source', function(done) {
-    //    assert.throws(function() { Source({}); });
-    //    assert.throws(function() { Source({}, {}); });
-    //    done();
-    //});
+    t.test('fails without source', function(t) {
+        assert.throws(function() { TileliveCache({}); });
+        assert.throws(function() { TileliveCache({}, {}); });
+        t.end();
+    });
     t.test('loads + sets default values', function(t) {
         var Source = TileliveCache({ client: lruClient() }, Testsource);
         assert.ok(Source.options);

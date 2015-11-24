@@ -10,14 +10,13 @@ var now = Testsource.now;
 
 var test = tap.test;
 
-function client() {
-    var cache = redis.createClient({return_buffers: true});
+function client(cacheClient) {
+    var cache = cacheClient || redis.createClient({return_buffers: true});
     return {
         get: function(k, cb) {
-            //if (client.command_queue.length >= client.command_queue_high_water) {
-            //    client.emit('error', new Error('Redis command queue at high water mark'));
-            //    return get.call(source, url, callback);
-            //}
+            if (cache.command_queue.length >= cache.command_queue_high_water) {
+                return cb(new Error('Redis command queue at high water mark'));
+            }
             cache.get(k, cb);
         },
         set: function(k, t, v, cb) {
@@ -28,6 +27,17 @@ function client() {
         },
         redis: cache
     };
+}
+
+function deadClient() {
+    var deadclient = redis.createClient(6380, '127.0.0.1', {
+        retry_max_delay: 500
+    });
+
+    deadclient.on('error', function(/* err */) {
+        // No op.  Otherwise errors out the tests.
+    });
+    return client(deadclient);
 }
 
 var tile = function(expected, cached, done) {
@@ -60,7 +70,7 @@ var error = function(message, cached, done) {
     };
 };
 
-test('source', function(t) {
+test('Redis client', function(t) {
     var CachedSource = TileliveCache({
         client: client(),
         ttl: 1,
@@ -141,6 +151,43 @@ test('source', function(t) {
             });
             t.end();
         }, 2000);
+    });
+
+    t.test('quit', function(t) {
+        CachedSource.options.client.redis.end();
+        t.end();
+    });
+
+    t.end();
+});
+
+
+test('Dead Redis client', function(t) {
+    var CachedSource = TileliveCache({
+        client: deadClient(),
+        ttl: 1,
+        stale: 1
+    }, Testsource);
+    var source;
+    t.test('create source', function(t) {
+        source = new CachedSource({}, function(err) {
+            assert.ifError(err);
+            CachedSource.options.client.redis.flushdb(function() {
+                t.end();
+            });
+        });
+    });
+    t.test('dead tile 200 a miss', function(t) {
+        source.getTile(0, 0, 0, tile(tiles.a, false, t.end));
+    });
+    t.test('dead tile 200 b miss', function(t) {
+        source.getTile(1, 0, 0, tile(tiles.b, false, t.end));
+    });
+    t.test('dead grid 200 a miss', function(t) {
+        source.getGrid(0, 0, 0, grid(grids.a, false, t.end));
+    });
+    t.test('dead grid 200 b miss', function(t) {
+        source.getGrid(1, 0, 0, grid(grids.b, false, t.end));
     });
 
     t.test('quit', function(t) {
