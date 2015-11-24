@@ -1,5 +1,5 @@
 {
-  "name": "tilelive-redis",
+  "name": "tilelive-cache",
   "version": "0.0.1",
   "main": "./index.js",
   "description": "Cache wrapping source for tilelive",
