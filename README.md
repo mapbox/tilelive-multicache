@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/mapbox/tilelive-cache.png?branch=master)](https://travis-ci.org/mapbox/tilelive-multicache)
+[![Build Status](https://travis-ci.org/mapbox/tilelive-multicache.png?branch=master)](https://travis-ci.org/mapbox/tilelive-multicache)
 
 tilelive-multicache
 --------------
