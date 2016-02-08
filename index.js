@@ -59,7 +59,7 @@ module.exports.cachingGet = function(namespace, options, get) {
 
                 // Update cache & bump `expires` header
                 get.call(source, url, function(err, buffer, headers) {
-                    if (err && !errcode(err)) return client.emit('error', err);
+                    if (err && !errcode(err)) return client.error(err);
 
                     headers = headers || {};
                     headers = setEx(key, err, buffer, headers, ttl, stale);
