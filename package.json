@@ -1,6 +1,6 @@
 {
   "name": "tilelive-multicache",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "main": "./index.js",
   "description": "Cache wrapping source for tilelive",
   "repository": {
